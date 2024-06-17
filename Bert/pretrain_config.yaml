@@ -107,8 +107,10 @@ base_net_cfg:
     type_vocab_size: 2
     initializer_range: 0.02
     use_relative_positions: False
+    use_position_embedding: False
     dtype: mstype.float32
     compute_type: mstype.float16
+    use_recompute: False
 # nezha
 nezha_batch_size: 96
 nezha_net_cfg:
@@ -124,9 +126,11 @@ nezha_net_cfg:
     max_position_embeddings: 512
     type_vocab_size: 2
     initializer_range: 0.02
-    use_relative_positions: True
+    use_relative_positions: False
+    use_position_embedding: False
     dtype: mstype.float32
     compute_type: mstype.float16
+    use_recompute: False
 # large
 large_batch_size: 24
 large_net_cfg:
@@ -143,8 +147,10 @@ large_net_cfg:
     type_vocab_size: 2
     initializer_range: 0.02
     use_relative_positions: False
+    use_position_embedding: False
     dtype: mstype.float32
     compute_type: mstype.float16
+    use_recompute: False
 # Accelerated large network which is only supported in Ascend yet.
 large_boost_batch_size: 24
 large_boost_net_cfg:
@@ -161,9 +167,10 @@ large_boost_net_cfg:
     type_vocab_size: 2
     initializer_range: 0.02
     use_relative_positions: False
+    use_position_embedding: False
     dtype: mstype.float32
     compute_type: mstype.float16
-
+    use_recompute: False
 
 ---
 # Help description for each configuration
