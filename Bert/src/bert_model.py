@@ -691,7 +691,6 @@ class BertTransformer(nn.Cell):
                                     initializer_range=initializer_range,
                                     hidden_dropout_prob=hidden_dropout_prob,
                                     use_relative_positions=use_relative_positions,
-                                    hidden_act=hidden_act,
                                     compute_type=compute_type)
             layers.append(layer)
 
@@ -780,7 +779,7 @@ class BertModel(nn.Cell):
         self.bert_embedding_postprocessor = EmbeddingPostprocessor(
             embedding_size=self.embedding_size,
             embedding_shape=output_embedding_shape,
-            use_relative_positions=config.use_position_embedding,
+            use_position_embedding=config.use_position_embedding,
             use_token_type=True,
             token_type_vocab_size=config.type_vocab_size,
             max_position_embeddings=config.max_position_embeddings,
