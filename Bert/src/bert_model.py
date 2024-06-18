@@ -115,7 +115,7 @@ class EmbeddingPostprocessor(nn.Cell):
         embedding_shape (list): [batch_size, seq_length, embedding_size], the shape of
                          each embedding vector.
     """
-    def __init__(self,config,embedding_shape,):
+    def __init__(self,config,embedding_shape):
         super(EmbeddingPostprocessor, self).__init__()
         self.embedding_dim = config.hidden_size
         self.use_token_type = config.use_token_type
@@ -485,14 +485,12 @@ class BertSelfAttention(nn.Cell):
             from_tensor_width=self.hidden_size,
             to_tensor_width=self.hidden_size,
             size_per_head=self.size_per_head,
-            use_one_hot_embeddings=use_one_hot_embeddings,
+            use_one_hot_embeddings=use_one_hot_embeddings
             )
 
-        self.output = BertOutput(
-                                config=config,
+        self.output = BertOutput(config=config,
                                 in_channels=self.hidden_size,
-                                out_channels=self.hidden_size
-                                )
+                                out_channels=self.hidden_size)
         self.reshape = P.Reshape()
         self.shape = (-1, self.hidden_size)
 
@@ -518,7 +516,7 @@ class BertEncoderCell(nn.Cell):
         self.attention = BertSelfAttention(
             config=config,
             use_one_hot_embeddings=use_one_hot_embeddings)
-        self.intermediate = nn.extend.Linear(config=config,
+        self.intermediate = nn.extend.Linear(
                                     in_features=self.hidden_size,
                                     out_features=self.intermediate_size,
                                     weight_init=TruncatedNormal(config.initializer_range)).to_float(self.compute_type)
