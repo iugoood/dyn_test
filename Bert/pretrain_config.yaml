@@ -107,8 +107,13 @@ base_net_cfg:
     type_vocab_size: 2
     initializer_range: 0.02
     use_relative_positions: False
+    use_position_embedding: False
     dtype: mstype.float32
     compute_type: mstype.float16
+    return_all_encoders: False
+    has_attention_mask: True
+    max_relative_position: 16
+    use_token_type: True
 # nezha
 nezha_batch_size: 96
 nezha_net_cfg:
@@ -125,8 +130,13 @@ nezha_net_cfg:
     type_vocab_size: 2
     initializer_range: 0.02
     use_relative_positions: True
+    use_position_embedding: False
     dtype: mstype.float32
     compute_type: mstype.float16
+    return_all_encoders: False
+    has_attention_mask: True
+    max_relative_position: 16
+    use_token_type: True
 # large
 large_batch_size: 24
 large_net_cfg:
@@ -143,8 +153,13 @@ large_net_cfg:
     type_vocab_size: 2
     initializer_range: 0.02
     use_relative_positions: False
+    use_position_embedding: True
     dtype: mstype.float32
     compute_type: mstype.float16
+    return_all_encoders: False
+    has_attention_mask: True
+    max_relative_position: 16
+    use_token_type: True
 # Accelerated large network which is only supported in Ascend yet.
 large_boost_batch_size: 24
 large_boost_net_cfg:
@@ -161,10 +176,13 @@ large_boost_net_cfg:
     type_vocab_size: 2
     initializer_range: 0.02
     use_relative_positions: False
+    use_position_embedding: True
     dtype: mstype.float32
     compute_type: mstype.float16
-
-
+    return_all_encoders: False
+    has_attention_mask: True
+    max_relative_position: 16
+    use_token_type: True
 ---
 # Help description for each configuration
 enable_modelarts: "Whether training on modelarts, default: False"

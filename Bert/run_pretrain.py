@@ -206,8 +206,8 @@ def InitNetWithGrads(net_with_loss, optimizer):
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def run_pretrain():
     """pre-train bert_clue"""
-    context.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target, device_id=cfg.device_id)
-    context.set_context(reserve_class_name_in_scope=False)
+    ms.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target, device_id=cfg.device_id)
+    ms.set_context(reserve_class_name_in_scope=False)
     _set_graph_kernel_context(cfg.device_target)
     ckpt_save_dir = cfg.save_checkpoint_path
     rank = 0
