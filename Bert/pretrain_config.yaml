@@ -33,7 +33,7 @@ data_dir: ''
 schema_dir: ''
 dataset_format: "mindrecord"
 num_samples: None   # is the option which could be set by user to specify steps when bert_network is base
-
+auto_mixed_precision_flag: False
 # ==============================================================================
 # pretrain related
 batch_size: 32

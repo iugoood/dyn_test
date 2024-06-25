@@ -267,8 +267,8 @@ def InitNetWithGrads(net_with_loss, optimizer):
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def run_pretrain():
     """pre-train bert_clue"""
-    context.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target, device_id=cfg.device_id)
-    context.set_context(reserve_class_name_in_scope=False)
+    ms.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target, device_id=cfg.device_id)
+    ms.set_context(reserve_class_name_in_scope=False)
     _set_graph_kernel_context(cfg.device_target)
     ckpt_save_dir = cfg.save_checkpoint_path
     rank = 0
@@ -306,7 +306,8 @@ def run_pretrain():
                              cfg.bucket_list, cfg.dataset_format, cfg.num_samples)
     net_with_loss = BertNetworkWithLoss(bert_net_cfg, True)
     # 自动混合精度
-    #net_with_loss = auto_mixed_precision(net_with_loss, amp_level="O0",dtype=ms.bfloat16)
+    if cfg.auto_mixed_precision_flag:
+        net_with_loss = auto_mixed_precision(net_with_loss, amp_level="O0",dtype=ms.bfloat16)
 
     new_repeat_count = cfg.epoch_size * ds.get_dataset_size() // cfg.data_sink_steps
     if cfg.train_steps > 0:
