@@ -16,10 +16,10 @@
 '''
 Bert finetune and evaluation model script.
 '''
+import mindspore
 import mindspore.nn as nn
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.ops import operations as P
-from mindspore import context
 from .bert_model import BertModel
 
 
@@ -76,7 +76,7 @@ class BertSquadModel(nn.Cell):
         self.dtype = config.dtype
         self.log_softmax = P.LogSoftmax(axis=1)
         self.is_training = is_training
-        self.gpu_target = context.get_context("device_target") == "GPU"
+        self.gpu_target = mindspore.get_context("device_target") == "GPU"
         self.cast = P.Cast()
         self.reshape = P.Reshape()
         self.transpose = P.Transpose()

@@ -18,7 +18,7 @@ Bert evaluation script.
 """
 
 import os
-from mindspore import context
+import mindspore
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.utils import BertMetric
@@ -32,7 +32,7 @@ def bert_predict():
     Predict function
     '''
     devid = int(os.getenv('DEVICE_ID'))
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=devid)
+    mindspore.set_context(mode=0, device_target="Ascend", device_id=devid, jit_config={"jit_level": "O2"})
     dataset = create_eval_dataset(cfg.batch_size, 1, data_dir=cfg.eval_data_dir, dataset_format=cfg.dataset_format)
     net_for_pretraining = BertPretrainEval(bert_net_cfg)
     net_for_pretraining.set_train(False)
