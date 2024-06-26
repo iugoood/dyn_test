@@ -265,7 +265,7 @@ class RelaPosEmbeddingsGenerator(nn.Cell):
             embeddings = self.reshape(embeddings, my_shape)
         else:
             embeddings = self.gather(self.embeddings_table,
-                                     relative_positions_matrix_out,0)
+                                     relative_positions_matrix_out, 0)
         return embeddings
 
 
@@ -357,7 +357,7 @@ class BertAttention(nn.Cell):
 
         self.cast_compute_type = SaturateCast(dst_type=self.compute_type)
         if self.use_relative_positions:
-            self._generate_relative_positions_embeddings = \
+            self.generate_relative_positions_embeddings = \
                 RelaPosEmbeddingsGenerator(depth=size_per_head,
                                            max_relative_position=config.max_relative_position,
                                            initializer_range=config.initializer_range,
@@ -390,7 +390,7 @@ class BertAttention(nn.Cell):
         # Self-Attention with Relative Position Representations
         if self.use_relative_positions:
             # relations_keys is [F|T, F|T, H]
-            relations_keys = self._generate_relative_positions_embeddings(shape_from)
+            relations_keys = self.generate_relative_positions_embeddings(shape_from)
             relations_keys = self.cast_compute_type(relations_keys)
             # query_layer_t is [F, B, N, H]
             query_layer_t = self.transpose(query_layer, self.trans_shape_relative)

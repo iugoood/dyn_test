@@ -17,8 +17,9 @@ import os
 import shutil
 import numpy as np
 
+import mindspore
 import mindspore.common.dtype as mstype
-from mindspore import Tensor, context, load_checkpoint, export
+from mindspore import Tensor, load_checkpoint, export
 
 from src.finetune_eval_model import BertCLSModel, BertSquadModel, BertNERModel
 from src.bert_for_finetune import BertNER
@@ -40,9 +41,9 @@ def modelarts_pre_process():
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def run_export():
     '''export function'''
-    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
+    mindspore.set_context(mode=0, device_target=args.device_target)
     if args.device_target == "Ascend":
-        context.set_context(device_id=args.device_id)
+        mindspore.set_context(device_id=args.device_id)
 
     if args.description == "run_ner":
         label_list = []

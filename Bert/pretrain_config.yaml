@@ -107,7 +107,7 @@ base_net_cfg:
     type_vocab_size: 2
     initializer_range: 0.02
     use_relative_positions: False
-    use_position_embedding: False
+    use_position_embedding: True
     dtype: mstype.float32
     compute_type: mstype.float16
     return_all_encoders: True

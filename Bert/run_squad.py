@@ -18,8 +18,8 @@ Bert finetune and evaluation script.
 '''
 import os
 import collections
+import mindspore
 import mindspore.common.dtype as mstype
-from mindspore import context
 from mindspore import log as logger
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore.nn.optim import AdamWeightDecay, Lamb, Momentum
@@ -158,18 +158,19 @@ def run_squad():
     load_finetune_checkpoint_path = args_opt.load_finetune_checkpoint_path
     target = args_opt.device_target
     if target == "Ascend":
-        context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
+        mindspore.set_context(mode=0, device_target="Ascend", device_id=args_opt.device_id,
+                              jit_config={"jit_level": "O2"})
     elif target == "GPU":
-        context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-        context.set_context(enable_graph_kernel=True)
+        mindspore.set_context(mode=0, device_target="GPU")
+        mindspore.set_context(enable_graph_kernel=True)
         if bert_net_cfg.compute_type != mstype.float32:
             logger.warning('GPU only support fp32 temporarily, run with fp32.')
             bert_net_cfg.compute_type = mstype.float32
     elif target == "CPU":
         if args_opt.use_pynative_mode:
-            context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU", device_id=args_opt.device_id)
+            mindspore.set_context(mode=1, device_target="CPU", device_id=args_opt.device_id)
         else:
-            context.set_context(mode=context.GRAPH_MODE, device_target="CPU", device_id=args_opt.device_id)
+            mindspore.set_context(mode=0, device_target="CPU", device_id=args_opt.device_id)
     else:
         raise Exception("Target error, CPU or GPU or Ascend is supported.")
 

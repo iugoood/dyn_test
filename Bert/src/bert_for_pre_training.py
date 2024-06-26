@@ -15,6 +15,7 @@
 """Bert for pretraining."""
 import numpy as np
 
+import mindspore
 import mindspore.nn as nn
 from mindspore.common.initializer import initializer, TruncatedNormal
 from mindspore.ops import operations as P
@@ -25,9 +26,9 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.api import jit
 from mindspore.common import dtype as mstype
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
-from mindspore.context import ParallelMode
+from mindspore import ParallelMode
 from mindspore.communication.management import get_group_size
-from mindspore import context, amp, ops
+from mindspore import  amp, ops
 from mindspore._c_expression import MSContext
 from .bert_model import BertModel
 
@@ -571,7 +572,7 @@ class BertTrainAccumulationAllReducePostWithLossScaleCell(nn.Cell):
 
         self.grad = C.GradOperation(get_by_list=True, sens_param=True)
         self.reducer_flag = False
-        self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
+        self.parallel_mode = mindspore.get_auto_parallel_context("parallel_mode")
         if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
             self.reducer_flag = True
         self.grad_reducer = F.identity
@@ -703,7 +704,7 @@ class BertTrainAccumulationAllReduceEachWithLossScaleCell(nn.Cell):
 
         self.grad = C.GradOperation(get_by_list=True, sens_param=True)
         self.reducer_flag = False
-        self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
+        self.parallel_mode = mindspore.get_auto_parallel_context("parallel_mode")
         if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
             self.reducer_flag = True
         self.grad_reducer = F.identity
@@ -883,7 +884,7 @@ class BertPretrainEval(nn.Cell):
         self.cast = P.Cast()
         self.allreduce = P.AllReduce()
         self.reduce_flag = False
-        parallel_mode = context.get_auto_parallel_context("parallel_mode")
+        parallel_mode = mindspore.get_auto_parallel_context("parallel_mode")
         if parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
             self.reduce_flag = True
 

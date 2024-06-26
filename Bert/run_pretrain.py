@@ -17,13 +17,12 @@
 python run_pretrain.py
 """
 import os
-import mindspore as ms
+import mindspore
 import mindspore.communication.management as D
 from mindspore.communication.management import get_rank
 import mindspore.common.dtype as mstype
-from mindspore import context
 from mindspore.train.model import Model
-from mindspore.context import ParallelMode
+from mindspore import ParallelMode
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
@@ -50,25 +49,25 @@ _current_dir = os.path.dirname(os.path.realpath(__file__))
 
 def _set_bert_all_reduce_split():
     """set bert all_reduce fusion split, support num_hidden_layers is 12 and 24."""
-    device_target = context.get_context('device_target')
-    enable_graph_kernel = context.get_context('enable_graph_kernel')
-    device_num = context.get_auto_parallel_context('device_num')
+    device_target = mindspore.get_context('device_target')
+    enable_graph_kernel = mindspore.get_context('enable_graph_kernel')
+    device_num = mindspore.get_auto_parallel_context('device_num')
     if bert_net_cfg.num_hidden_layers == 12:
         if bert_net_cfg.use_relative_positions:
-            context.set_auto_parallel_context(all_reduce_fusion_config=[29, 58, 87, 116, 145, 174, 203, 217])
+            mindspore.set_auto_parallel_context(all_reduce_fusion_config=[29, 58, 87, 116, 145, 174, 203, 217])
         else:
-            context.set_auto_parallel_context(all_reduce_fusion_config=[28, 55, 82, 109, 136, 163, 190, 205])
+            mindspore.set_auto_parallel_context(all_reduce_fusion_config=[28, 55, 82, 109, 136, 163, 190, 205])
             if device_target == 'GPU' and enable_graph_kernel and device_num == 8:
-                context.set_auto_parallel_context(all_reduce_fusion_config=[180, 205])
+                mindspore.set_auto_parallel_context(all_reduce_fusion_config=[180, 205])
             elif device_target == 'GPU' and enable_graph_kernel and device_num == 16:
-                context.set_auto_parallel_context(all_reduce_fusion_config=[120, 205])
+                mindspore.set_auto_parallel_context(all_reduce_fusion_config=[120, 205])
     elif bert_net_cfg.num_hidden_layers == 24:
         if bert_net_cfg.use_relative_positions:
-            context.set_auto_parallel_context(all_reduce_fusion_config=[30, 90, 150, 210, 270, 330, 390, 421])
+            mindspore.set_auto_parallel_context(all_reduce_fusion_config=[30, 90, 150, 210, 270, 330, 390, 421])
         else:
-            context.set_auto_parallel_context(all_reduce_fusion_config=[38, 93, 148, 203, 258, 313, 368, 397])
+            mindspore.set_auto_parallel_context(all_reduce_fusion_config=[38, 93, 148, 203, 258, 313, 368, 397])
             if device_target == 'Ascend' and enable_graph_kernel and device_num == 8:
-                context.set_auto_parallel_context(all_reduce_fusion_config=[
+                mindspore.set_auto_parallel_context(all_reduce_fusion_config=[
                     0, 1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 35, 40, 50, 70, 93, 148, 203, 258, 313, 368, 397])
 
 
@@ -105,7 +104,7 @@ def _get_optimizer(args_opt, network):
                         {'order_params': params}]
         if args_opt.enable_lossscale == "true" and args_opt.device_target == 'GPU':
             optimizer = AdamWeightDecayForBert(group_params, learning_rate=lr_schedule, eps=cfg.AdamWeightDecay.eps)
-        elif context.get_context("mode") == context.PYNATIVE_MODE and args_opt.device_target == 'GPU':
+        elif mindspore.get_context("mode") == 1 and args_opt.device_target == 'GPU':
             optimizer = AdamWeightDecayOp(group_params, learning_rate=lr_schedule, eps=cfg.AdamWeightDecay.eps)
         else:
             optimizer = AdamWeightDecay(group_params, learning_rate=lr_schedule, eps=cfg.AdamWeightDecay.eps)
@@ -133,12 +132,12 @@ def _set_graph_kernel_context(device_target):
     """Add suitable graph kernel context for different configs."""
     if device_target == 'GPU':
         if cfg.bert_network == 'base':
-            context.set_context(enable_graph_kernel=True,
-                                graph_kernel_flags="--enable_stitch_fusion=true "
-                                                   "--enable_parallel_fusion=true "
-                                                   "--enable_cluster_ops=BatchMatMul")
+            mindspore.set_context(enable_graph_kernel=True,
+                                  graph_kernel_flags="--enable_stitch_fusion=true "
+                                                     "--enable_parallel_fusion=true "
+                                                     "--enable_cluster_ops=BatchMatMul")
         else:
-            context.set_context(enable_graph_kernel=True)
+            mindspore.set_context(enable_graph_kernel=True)
     else:
         logger.warning('Graph kernel only supports GPU back-end now, run with graph kernel off.')
 
@@ -162,11 +161,11 @@ def modelarts_pre_process():
 
 
 def set_ascend_max_device_memory(config):
-    is_ascend910b_ge = ms.get_context("enable_ge") and ms.get_context("mode") == ms.GRAPH_MODE and \
+    is_ascend910b_ge = mindspore.get_context("enable_ge") and mindspore.get_context("mode") == 0 and \
             MSContext.get_instance().get_ascend_soc_version() != 'ascend910'
     if is_ascend910b_ge and hasattr(config, "max_device_memory"):
         logger.warning("When encountering a memory shortage situation in 1980B, reduce the max_device_memory.")
-        ms.set_context(max_device_memory=config.max_device_memory)
+        mindspore.set_context(max_device_memory=config.max_device_memory)
 
 
 def InitNetWithGrads(net_with_loss, optimizer):
@@ -206,8 +205,9 @@ def InitNetWithGrads(net_with_loss, optimizer):
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def run_pretrain():
     """pre-train bert_clue"""
-    ms.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target, device_id=cfg.device_id)
-    ms.set_context(reserve_class_name_in_scope=False)
+    mindspore.set_context(mode=0, device_target=cfg.device_target, device_id=cfg.device_id,
+                          jit_config={"jit_level": "O2"})
+    mindspore.set_context(reserve_class_name_in_scope=False)
     _set_graph_kernel_context(cfg.device_target)
     ckpt_save_dir = cfg.save_checkpoint_path
     rank = 0
@@ -224,9 +224,9 @@ def run_pretrain():
             rank = D.get_rank()
         ckpt_save_dir = os.path.join(cfg.save_checkpoint_path, 'ckpt_' + str(get_rank()))
 
-        context.reset_auto_parallel_context()
-        context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
-                                          device_num=device_num)
+        mindspore.reset_auto_parallel_context()
+        mindspore.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
+                                            device_num=device_num)
         _set_bert_all_reduce_split()
 
     _check_compute_type(cfg)
