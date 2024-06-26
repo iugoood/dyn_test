@@ -518,8 +518,8 @@ class BertEncoderCell(nn.Cell):
             config=config,
             use_one_hot_embeddings=use_one_hot_embeddings)
         self.intermediate = nn.Dense(
-                                    in_features=self.hidden_size,
-                                    out_features=self.intermediate_size,
+                                    in_channels=self.hidden_size,
+                                    out_channels=self.intermediate_size,
                                     weight_init=TruncatedNormal(config.initializer_range)).to_float(self.compute_type)
         self.output = BertOutput(config=config,
                                  in_channels=self.intermediate_size,
