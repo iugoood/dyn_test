@@ -621,6 +621,7 @@ class BertModel(nn.Cell):
         self.embedding_size = config.hidden_size
         self.token_type_ids = None
         self.compute_type = config.compute_type
+        self.return_all_encoders = config.return_all_encoders
 
         self.last_idx = self.num_hidden_layers - 1
         output_embedding_shape = [-1, config.seq_length, self.embedding_size]
@@ -667,9 +668,10 @@ class BertModel(nn.Cell):
         # bert encoder
         encoder_output = self.bert_encoder(self.cast_compute_type(embedding_output),
                                            attention_mask)
-
-        sequence_output = self.cast(encoder_output[self.last_idx], self.dtype)
-
+        if self.return_all_encoders:
+            sequence_output = self.cast(encoder_output[self.last_idx], self.dtype)
+        else:
+            sequence_output = self.cast(encoder_output[0], self.dtype)
         # pooler
         batch_size = P.Shape()(input_ids)[0]
         sequence_slice = self.slice(sequence_output,

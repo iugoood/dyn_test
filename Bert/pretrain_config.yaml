@@ -110,7 +110,7 @@ base_net_cfg:
     use_position_embedding: False
     dtype: mstype.float32
     compute_type: mstype.float16
-    return_all_encoders: False
+    return_all_encoders: True
     has_attention_mask: True
     max_relative_position: 16
     use_token_type: True
@@ -133,7 +133,7 @@ nezha_net_cfg:
     use_position_embedding: False
     dtype: mstype.float32
     compute_type: mstype.float16
-    return_all_encoders: False
+    return_all_encoders: True
     has_attention_mask: True
     max_relative_position: 16
     use_token_type: True
@@ -156,7 +156,7 @@ large_net_cfg:
     use_position_embedding: True
     dtype: mstype.float32
     compute_type: mstype.float16
-    return_all_encoders: False
+    return_all_encoders: True
     has_attention_mask: True
     max_relative_position: 16
     use_token_type: True
@@ -179,7 +179,7 @@ large_boost_net_cfg:
     use_position_embedding: True
     dtype: mstype.float32
     compute_type: mstype.float16
-    return_all_encoders: False
+    return_all_encoders: True
     has_attention_mask: True
     max_relative_position: 16
     use_token_type: True
