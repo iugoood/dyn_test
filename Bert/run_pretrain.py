@@ -55,7 +55,7 @@ except Exception:
     from mindspore.train.amp import _auto_mixed_precision_rewrite
     NEW_AUTO_WHITE = True
 
-def auto_mixed_precision(network, amp_level="O0", dtype=ms.float16, custom_fp32_cells=[]):
+def auto_mixed_precision(network, amp_level="O0", dtype=mindspore.float16, custom_fp32_cells=[]):
     """
     network (Cell): Definition of the network.
         amp_level (str): Supports ["O0", "O1", "O2", "O3"]. Default: ``"O0"`` .
@@ -306,7 +306,7 @@ def run_pretrain():
     net_with_loss = BertNetworkWithLoss(bert_net_cfg, True)
     # 自动混合精度
     if cfg.auto_mixed_precision_flag:
-        net_with_loss = auto_mixed_precision(net_with_loss, amp_level="O0",dtype=ms.bfloat16)
+        net_with_loss = auto_mixed_precision(net_with_loss, amp_level="O0",dtype=mindspore.bfloat16)
 
     new_repeat_count = cfg.epoch_size * ds.get_dataset_size() // cfg.data_sink_steps
     if cfg.train_steps > 0:
