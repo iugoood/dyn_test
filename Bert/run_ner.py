@@ -20,9 +20,8 @@ Bert finetune and evaluation script.
 import os
 import time
 from tqdm import tqdm
-import mindspore as ms
+import mindspore
 import mindspore.common.dtype as mstype
-from mindspore import context
 from mindspore import log as logger
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore.nn.optim import AdamWeightDecay, Lamb, Momentum
@@ -80,7 +79,7 @@ def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoin
     param_dict = load_checkpoint(load_checkpoint_path)
     load_param_into_net(network, param_dict)
 
-    if ms.get_context("device_target") == "CPU":
+    if mindspore.get_context("device_target") == "CPU":
         netwithgrads = BertFinetuneCellCPU(network, optimizer=optimizer)
     else:
         update_cell = DynamicLossScaleUpdateCell(loss_scale_value=2**32, scale_factor=2, scale_window=1000)
@@ -125,7 +124,7 @@ def do_eval(dataset=None, network=None, use_crf="", with_lstm="", num_class=41, 
     model = Model(net_for_pretraining)
 
     if assessment_method == "clue_benchmark":
-        if ms.get_context("device_target") == "CPU":
+        if mindspore.get_context("device_target") == "CPU":
             from src.cluener_evaluation_cpu import submit
         else:
             from src.cluener_evaluation import submit
@@ -201,18 +200,19 @@ def run_ner():
     load_finetune_checkpoint_path = args_opt.load_finetune_checkpoint_path
     target = args_opt.device_target
     if target == "Ascend":
-        context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
+        mindspore.set_context(mode=0, device_target="Ascend", device_id=args_opt.device_id,
+                              jit_config={"jit_level": "O2"})
     elif target == "GPU":
-        context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-        context.set_context(enable_graph_kernel=True)
+        mindspore.set_context(mode=0, device_target="GPU")
+        mindspore.set_context(enable_graph_kernel=True)
         if bert_net_cfg.compute_type != mstype.float32:
             logger.warning('GPU only support fp32 temporarily, run with fp32.')
             bert_net_cfg.compute_type = mstype.float32
     elif target == "CPU":
         if args_opt.use_pynative_mode:
-            context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU", device_id=args_opt.device_id)
+            mindspore.set_context(mode=1, device_target="CPU", device_id=args_opt.device_id)
         else:
-            context.set_context(mode=context.GRAPH_MODE, device_target="CPU", device_id=args_opt.device_id)
+            mindspore.set_context(mode=0, device_target="CPU", device_id=args_opt.device_id)
     else:
         raise Exception("Target error, CPU or GPU or Ascend is supported.")
     label_list = []

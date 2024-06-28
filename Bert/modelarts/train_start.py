@@ -19,9 +19,10 @@ Bert finetune and evaluation script.
 import os
 import collections
 import shutil
+import mindspore
 import mindspore.common.dtype as mstype
 from mindspore import log as logger
-from mindspore import Tensor, context, load_checkpoint, export
+from mindspore import Tensor, load_checkpoint, export
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore.nn.optim import AdamWeightDecay, Lamb, Momentum
 from mindspore.train.model import Model
@@ -153,9 +154,9 @@ def _get_last_ckpt(ckpt_dir):
 def run_export(ckpt_dir):
     '''export function'''
     ckpt_file = _get_last_ckpt(ckpt_dir)
-    context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
+    mindspore.set_context(mode=0, device_target=args_opt.device_target)
     if args_opt.device_target == "Ascend":
-        context.set_context(device_id=args_opt.device_id)
+        mindspore.set_context(device_id=args_opt.device_id)
 
     if args_opt.description == "run_ner":
         label_list = []
@@ -218,10 +219,10 @@ def run_squad():
     load_finetune_checkpoint_path = args_opt.load_finetune_checkpoint_path
     target = args_opt.device_target
     if target == "Ascend":
-        context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
+        mindspore.set_context(mode=0, device_target="Ascend", device_id=args_opt.device_id)
     elif target == "GPU":
-        context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-        context.set_context(enable_graph_kernel=True)
+        mindspore.set_context(mode=0, device_target="GPU")
+        mindspore.set_context(enable_graph_kernel=True)
         if bert_net_cfg.compute_type != mstype.float32:
             logger.warning('GPU only support fp32 temporarily, run with fp32.')
             bert_net_cfg.compute_type = mstype.float32

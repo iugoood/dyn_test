@@ -70,7 +70,8 @@ class BertConfig:
                  initializer_range=0.02,
                  use_relative_positions=False,
                  dtype=mstype.float32,
-                 compute_type=mstype.float32):
+                 compute_type=mstype.float32,
+                 use_recompute=False):
         self.seq_length = seq_length
         self.vocab_size = vocab_size
         self.hidden_size = hidden_size
@@ -86,6 +87,7 @@ class BertConfig:
         self.use_relative_positions = use_relative_positions
         self.dtype = dtype
         self.compute_type = compute_type
+        self.use_recompute = use_recompute
 
 
 class EmbeddingLookup(nn.Cell):
@@ -183,13 +185,12 @@ class EmbeddingPostprocessor(nn.Cell):
         self.use_relative_positions = use_relative_positions
         self.slice = P.StridedSlice()
         _, seq, _ = self.shape
-        self.full_position_embedding = nn.Embedding(
-            vocab_size=max_position_embeddings,
-            embedding_size=embedding_size,
-            use_one_hot=False)
-        self.layernorm = nn.LayerNorm((embedding_size,))
+        self.full_position_embedding = nn.extend.Embedding(
+            num_embeddings=self.max_position_embeddings,
+            embedding_dim=self.embedding_dim)
+        self.layernorm = nn.extend.LayerNorm((self.embedding_dim,))
         self.position_ids = Tensor(np.arange(seq).reshape(-1, seq).astype(np.int32))
-        self.add = P.Add()
+        self.add = ops.extend.add
 
     def construct(self, token_type_ids, word_embeddings):
         """Postprocessors apply positional and token type embeddings to word embeddings."""
@@ -225,13 +226,13 @@ class BertOutput(nn.Cell):
                  dropout_prob=0.1,
                  compute_type=mstype.float32):
         super(BertOutput, self).__init__()
-        self.dense = nn.Dense(in_channels, out_channels,
-                              weight_init=TruncatedNormal(initializer_range)).to_float(compute_type)
+        self.dense = nn.extend.Linear(in_channels, out_channels,
+                                      weight_init=TruncatedNormal(initializer_range)).to_float(compute_type)
         self.dropout = nn.Dropout(p=dropout_prob)
         self.dropout_prob = dropout_prob
-        self.add = P.Add()
-        self.layernorm = nn.LayerNorm((out_channels,)).to_float(compute_type)
-        self.cast = P.Cast()
+        self.add = ops.extend.add
+        self.layernorm = nn.extend.LayerNorm((out_channels,)).to_float(compute_type)
+        self.cast = ops.cast
 
     def construct(self, hidden_status, input_tensor):
         output = self.dense(hidden_status)
@@ -254,11 +255,11 @@ class RelaPosMatrixGenerator(nn.Cell):
         self._max_relative_position = max_relative_position
         self._min_relative_position = -max_relative_position
 
-        self.tile = P.Tile()
+        self.tile = ops.tile
         self.range_mat = P.Reshape()
-        self.sub = P.Sub()
+        self.sub = ops.extend.sub
         self.expanddims = P.ExpandDims()
-        self.cast = P.Cast()
+        self.cast = ops.cast
 
     def construct(self, length):
         """Generates matrix of relative positions between inputs."""
@@ -309,7 +310,7 @@ class RelaPosEmbeddingsGenerator(nn.Cell):
         self.reshape = P.Reshape()
         self.shape = P.Shape()
         self.gather = P.Gather()  # index_select
-        self.matmul = P.BatchMatMul()
+        self.matmul = ops.extend.bmm
 
     def construct(self, length):
         """Generate embedding for each relative position of dimension depth."""
@@ -324,7 +325,7 @@ class RelaPosEmbeddingsGenerator(nn.Cell):
             embeddings = self.reshape(embeddings, my_shape)
         else:
             embeddings = self.gather(self.embeddings_table,
-                                     relative_positions_matrix_out, 0)
+                                     relative_positions_matrix_out,0)
         return embeddings
 
 
@@ -344,9 +345,9 @@ class SaturateCast(nn.Cell):
         self.tensor_min_type = float(np.finfo(np_type).min)
         self.tensor_max_type = float(np.finfo(np_type).max)
 
-        self.min_op = P.Minimum()
-        self.max_op = P.Maximum()
-        self.cast = P.Cast()
+        self.min_op = ops.minimum
+        self.max_op = ops.maximum
+        self.cast = ops.cast
         self.dst_type = dst_type
 
     def construct(self, x):
@@ -402,22 +403,19 @@ class BertAttention(nn.Cell):
         self.shape_to_2d = (-1, to_tensor_width)
         weight = TruncatedNormal(initializer_range)
         units = num_attention_heads * size_per_head
-        self.query_layer = nn.Dense(from_tensor_width,
+        self.query_layer = nn.extend.Linear(from_tensor_width,
                                     units,
-                                    activation=query_act,
                                     weight_init=weight).to_float(compute_type)
-        self.key_layer = nn.Dense(to_tensor_width,
+        self.key_layer = nn.extend.Linear(to_tensor_width,
                                   units,
-                                  activation=key_act,
                                   weight_init=weight).to_float(compute_type)
-        self.value_layer = nn.Dense(to_tensor_width,
+        self.value_layer = nn.extend.Linear(to_tensor_width,
                                     units,
-                                    activation=value_act,
                                     weight_init=weight).to_float(compute_type)
 
         self.matmul_trans_b = P.BatchMatMul(transpose_b=True)
-        self.multiply = P.Mul()
-        self.transpose = P.Transpose()
+        self.multiply = ops.mul
+        self.transpose = ops.permute
         self.trans_shape = (0, 2, 1, 3)
         self.trans_shape_relative = (2, 0, 1, 3)
         self.trans_shape_position = (1, 2, 0, 3)
@@ -429,9 +427,9 @@ class BertAttention(nn.Cell):
 
         if self.has_attention_mask:
             self.expand_dims = P.ExpandDims()
-            self.sub = P.Sub()
-            self.add = P.Add()
-            self.cast = P.Cast()
+            self.sub = ops.extend.sub
+            self.add = ops.extend.add
+            self.cast = ops.cast
             self.get_dtype = P.DType()
 
         self.shape_return = (-1, num_attention_heads * size_per_head)
@@ -632,9 +630,9 @@ class BertEncoderCell(nn.Cell):
             hidden_dropout_prob=hidden_dropout_prob,
             use_relative_positions=use_relative_positions,
             compute_type=compute_type)
-        self.intermediate = nn.Dense(in_channels=hidden_size,
-                                     out_channels=intermediate_size,
-                                     activation=hidden_act,
+        self.intermediate = nn.extend.Linear(
+                                    in_features=self.hidden_size,
+                                    out_features=self.intermediate_size,
                                      weight_init=TruncatedNormal(initializer_range)).to_float(compute_type)
         self.output = BertOutput(in_channels=intermediate_size,
                                  out_channels=hidden_size,
@@ -683,7 +681,8 @@ class BertTransformer(nn.Cell):
                  use_relative_positions=False,
                  hidden_act="gelu",
                  compute_type=mstype.float32,
-                 return_all_encoders=False):
+                 return_all_encoders=False,
+                 use_recompute=False):
         super(BertTransformer, self).__init__()
         self.return_all_encoders = return_all_encoders
 
@@ -702,7 +701,9 @@ class BertTransformer(nn.Cell):
             layers.append(layer)
 
         self.layers = nn.CellList(layers)
-
+        if use_recompute:
+            for layer in self.layers:
+                self.recompute(layer)
         self.reshape = P.Reshape()
         self.shape = (-1, hidden_size)
 
@@ -738,7 +739,7 @@ class CreateAttentionMaskFromInputMask(nn.Cell):
         super(CreateAttentionMaskFromInputMask, self).__init__()
         self.input_mask = None
 
-        self.cast = P.Cast()
+        self.cast = ops.cast
         self.reshape = P.Reshape()
 
     def construct(self, input_mask):
@@ -770,7 +771,6 @@ class BertModel(nn.Cell):
         self.num_hidden_layers = config.num_hidden_layers
         self.embedding_size = config.hidden_size
         self.token_type_ids = None
-
         self.last_idx = self.num_hidden_layers - 1
         output_embedding_shape = [-1, config.seq_length, self.embedding_size]
 
@@ -803,9 +803,10 @@ class BertModel(nn.Cell):
             use_relative_positions=config.use_relative_positions,
             hidden_act=config.hidden_act,
             compute_type=config.compute_type,
-            return_all_encoders=True)
+            return_all_encoders=True,
+            use_recompute=config.use_recompute)
 
-        self.cast = P.Cast()
+        self.cast = ops.cast
         self.dtype = config.dtype
         self.cast_compute_type = SaturateCast(dst_type=config.compute_type)
         self.slice = P.StridedSlice()

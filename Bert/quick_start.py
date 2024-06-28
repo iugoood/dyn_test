@@ -17,7 +17,7 @@
 Bert quick start script.
 '''
 
-import mindspore as ms
+import mindspore
 from mindspore.train.model import Model
 from mindspore.ops import operations as P
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
@@ -59,9 +59,9 @@ def convert_single_example(text, max_seq_length, tokenizer):
         input_mask.append(0)
         segment_ids.append(0)
 
-    input_ids = ms.Tensor([input_ids,], dtype=ms.int32)
-    input_mask = ms.Tensor([input_mask,], dtype=ms.int32)
-    segment_ids = ms.Tensor([segment_ids,], dtype=ms.int32)
+    input_ids = mindspore.Tensor([input_ids,], dtype=mindspore.int32)
+    input_mask = mindspore.Tensor([input_mask,], dtype=mindspore.int32)
+    segment_ids = mindspore.Tensor([segment_ids,], dtype=mindspore.int32)
 
     return input_ids, input_mask, segment_ids
 
