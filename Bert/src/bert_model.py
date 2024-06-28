@@ -187,8 +187,8 @@ class EmbeddingPostprocessor(nn.Cell):
         _, seq, _ = self.shape
         self.full_position_embedding = nn.extend.Embedding(
             num_embeddings=self.max_position_embeddings,
-            embedding_dim=self.embedding_dim)
-        self.layernorm = nn.extend.LayerNorm((self.embedding_dim,))
+            embedding_dim=embedding_size)
+        self.layernorm = nn.extend.LayerNorm((embedding_size,))
         self.position_ids = Tensor(np.arange(seq).reshape(-1, seq).astype(np.int32))
         self.add = ops.extend.add
 
@@ -631,8 +631,8 @@ class BertEncoderCell(nn.Cell):
             use_relative_positions=use_relative_positions,
             compute_type=compute_type)
         self.intermediate = nn.extend.Linear(
-                                    in_features=self.hidden_size,
-                                    out_features=self.intermediate_size,
+                                    in_features=hidden_size,
+                                    out_features=intermediate_size,
                                      weight_init=TruncatedNormal(initializer_range)).to_float(compute_type)
         self.output = BertOutput(in_channels=intermediate_size,
                                  out_channels=hidden_size,

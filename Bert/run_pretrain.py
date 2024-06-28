@@ -55,7 +55,7 @@ except Exception:
     from mindspore.train.amp import _auto_mixed_precision_rewrite
     NEW_AUTO_WHITE = True
 
-def auto_mixed_precision(network, amp_level="O0", dtype=ms.float16, custom_fp32_cells=[]):
+def auto_mixed_precision(network, amp_level="O0", dtype=mindspore.float16, custom_fp32_cells=[]):
     """
     network (Cell): Definition of the network.
         amp_level (str): Supports ["O0", "O1", "O2", "O3"]. Default: ``"O0"`` .
