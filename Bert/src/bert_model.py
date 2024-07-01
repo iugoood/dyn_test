@@ -630,9 +630,10 @@ class BertEncoderCell(nn.Cell):
             hidden_dropout_prob=hidden_dropout_prob,
             use_relative_positions=use_relative_positions,
             compute_type=compute_type)
-        self.intermediate = nn.extend.Linear(
+        self.intermediate = nn.Dense(
                                     in_features=hidden_size,
                                     out_features=intermediate_size,
+                                    activation=hidden_act,
                                      weight_init=TruncatedNormal(initializer_range)).to_float(compute_type)
         self.output = BertOutput(in_channels=intermediate_size,
                                  out_channels=hidden_size,
