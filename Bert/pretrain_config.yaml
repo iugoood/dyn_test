@@ -107,7 +107,6 @@ base_net_cfg:
     type_vocab_size: 2
     initializer_range: 0.02
     use_relative_positions: False
-    use_position_embedding: True
     dtype: mstype.float32
     compute_type: mstype.float16
     return_all_encoders: True
@@ -130,7 +129,6 @@ nezha_net_cfg:
     type_vocab_size: 2
     initializer_range: 0.02
     use_relative_positions: True
-    use_position_embedding: False
     dtype: mstype.float32
     compute_type: mstype.float16
     return_all_encoders: True
@@ -153,7 +151,6 @@ large_net_cfg:
     type_vocab_size: 2
     initializer_range: 0.02
     use_relative_positions: False
-    use_position_embedding: True
     dtype: mstype.float32
     compute_type: mstype.float16
     return_all_encoders: True
@@ -176,7 +173,6 @@ large_boost_net_cfg:
     type_vocab_size: 2
     initializer_range: 0.02
     use_relative_positions: False
-    use_position_embedding: True
     dtype: mstype.float32
     compute_type: mstype.float16
     return_all_encoders: True

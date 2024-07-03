@@ -37,7 +37,7 @@ def parse_args():
     parser.add_argument("--do_lower_case", type=bool, default=True, help="Whether to lower case the input text. "
                                                                          "Should be True for uncased models"
                                                                          " and False for cased models.")
-    parser.add_argument("--max_seq_length", type=int, default=384, help="Maximum sequence length.")
+    parser.add_argument("--max_seq_length", type=int, default=128, help="Maximum sequence length.")
     parser.add_argument("--doc_stride", type=int, default=128, help="When splitting up a long document into chunks, "
                                                                     "how much stride to take between chunks.")
     parser.add_argument("--max_query_length", type=int, default=64,

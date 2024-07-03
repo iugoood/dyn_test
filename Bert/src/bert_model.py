@@ -76,7 +76,6 @@ class BertConfig:
                  type_vocab_size=16,
                  initializer_range=0.02,
                  use_relative_positions=False,
-                 use_position_embedding=False,
                  dtype=mstype.float32,
                  compute_type=mstype.float32,
                  use_recompute=False,
@@ -100,7 +99,6 @@ class BertConfig:
         self.dtype = dtype
         self.compute_type = compute_type
         self.use_recompute = use_recompute
-        self.use_position_embedding = use_position_embedding
         self.return_all_encoders = return_all_encoders
         self.has_attention_mask = has_attention_mask
         self.max_relative_position = max_relative_position
@@ -127,7 +125,7 @@ class EmbeddingPostprocessor(nn.Cell):
         self.reshape = P.Reshape()
         self.shape = tuple(embedding_shape)
         self.dropout = nn.Dropout(p=config.hidden_dropout_prob)
-        self.use_position_embedding = config.use_position_embedding
+        self.use_relative_positions = config.use_relative_positions
         _, seq, _ = self.shape
         self.full_position_embedding = nn.Embedding(
             vocab_size=self.max_position_embeddings,
@@ -143,7 +141,7 @@ class EmbeddingPostprocessor(nn.Cell):
         if self.use_token_type:
             token_type_embeddings = self.token_type_embedding(token_type_ids)
             output = self.add(output, token_type_embeddings)
-        if self.use_position_embedding:
+        if not self.use_relative_positions:
             shape = F.shape(output)
             position_ids = self.position_ids[:, :shape[1]]
             position_embeddings = self.full_position_embedding(position_ids)
@@ -357,7 +355,7 @@ class BertAttention(nn.Cell):
 
         self.cast_compute_type = SaturateCast(dst_type=self.compute_type)
         if self.use_relative_positions:
-            self.generate_relative_positions_embeddings = \
+            self._generate_relative_positions_embeddings = \
                 RelaPosEmbeddingsGenerator(depth=size_per_head,
                                            max_relative_position=config.max_relative_position,
                                            initializer_range=config.initializer_range,
@@ -390,7 +388,7 @@ class BertAttention(nn.Cell):
         # Self-Attention with Relative Position Representations
         if self.use_relative_positions:
             # relations_keys is [F|T, F|T, H]
-            relations_keys = self.generate_relative_positions_embeddings(shape_from)
+            relations_keys = self._generate_relative_positions_embeddings(shape_from)
             relations_keys = self.cast_compute_type(relations_keys)
             # query_layer_t is [F, B, N, H]
             query_layer_t = self.transpose(query_layer, self.trans_shape_relative)
@@ -520,6 +518,7 @@ class BertEncoderCell(nn.Cell):
         self.intermediate = nn.Dense(
                                     in_channels=self.hidden_size,
                                     out_channels=self.intermediate_size,
+                                    activation=config.hidden_act,
                                     weight_init=TruncatedNormal(config.initializer_range)).to_float(self.compute_type)
         self.output = BertOutput(config=config,
                                  in_channels=self.intermediate_size,

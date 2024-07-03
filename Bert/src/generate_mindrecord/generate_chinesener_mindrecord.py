@@ -286,7 +286,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Make dataset in mindrecord format.')
     parser.add_argument('--data_dir', default=".", type=str, help='')
-    parser.add_argument('--max_seq_length', default=202, type=int, help='')
+    parser.add_argument('--max_seq_length', default=128, type=int, help='')
     parser.add_argument('--do_train', default=True, type=bool, help='')
     parser.add_argument('--do_eval', default=True, type=bool, help='')
     parser.add_argument('--do_lower_case', default=True, type=bool, help='')
